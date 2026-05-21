@@ -62,11 +62,13 @@ class Bot:
         store: SessionStore,
         security: Security,
         bot_username: str,
+        chat_prompt_prefix: str = "",
     ):
         self.runner = runner
         self.store = store
         self.security = security
         self.bot_username = bot_username
+        self.chat_prompt_prefix = chat_prompt_prefix
 
     async def _check_auth(self, update: Update) -> bool:
         user = update.effective_user
@@ -241,11 +243,19 @@ class Bot:
         workspace, scope = await self._resolve_mode(user.id)
         conv_id: Optional[str] = await self.store.get_conversation(user.id, scope)
 
+        # Persona prefix only applies in chat mode and only on the *first*
+        # turn of a conversation — once agy has the persona in context,
+        # repeating it every turn adds noise and dilutes intent.
+        if workspace is None and conv_id is None and self.chat_prompt_prefix:
+            prompt = self.chat_prompt_prefix + msg.text
+        else:
+            prompt = msg.text
+
         await ctx.bot.send_chat_action(chat_id=msg.chat_id, action=ChatAction.TYPING)
 
         try:
             result = await self.runner.run(
-                prompt=msg.text,
+                prompt=prompt,
                 workspace=workspace,
                 conversation_id=conv_id,
             )

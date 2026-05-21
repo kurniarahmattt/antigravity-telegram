@@ -69,6 +69,7 @@ class AgyRunner:
         conversations_dir: Path,
         timeout_seconds: int,
         skip_permissions: bool,
+        chat_scratch_dir: Path,
         cli_log_path: Optional[Path] = None,
     ):
         self.agy_bin = agy_bin
@@ -76,6 +77,10 @@ class AgyRunner:
         self.timeout_seconds = timeout_seconds
         self.skip_permissions = skip_permissions
         self.cli_log_path = cli_log_path or _CLI_LOG_DEFAULT
+        # Neutral cwd used in chat mode so agy does not discover an ambient
+        # project via .antigravitycli markers in the bot's own cwd.
+        self.chat_scratch_dir = chat_scratch_dir
+        self.chat_scratch_dir.mkdir(parents=True, exist_ok=True)
 
     def _resolve_cli_log_target(self) -> Optional[Path]:
         """`cli.log` is typically a symlink that agy retargets each invocation
@@ -132,12 +137,18 @@ class AgyRunner:
         loop = asyncio.get_running_loop()
         start = loop.time()
 
+        # In chat mode, run from a neutral scratch dir so agy can't auto-attach
+        # to whatever project markers exist near the bot's cwd. In code mode
+        # the workspace itself is the cwd so agy finds the intended project.
+        cwd = str(workspace) if workspace else str(self.chat_scratch_dir)
+
         try:
             proc = await asyncio.create_subprocess_exec(
                 *argv,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
                 env=os.environ.copy(),
+                cwd=cwd,
             )
             try:
                 stdout, stderr = await asyncio.wait_for(

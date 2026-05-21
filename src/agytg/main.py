@@ -57,6 +57,7 @@ async def _amain() -> None:
         conversations_dir=settings.agy_conversations_dir,
         timeout_seconds=settings.agy_timeout_seconds,
         skip_permissions=settings.agy_skip_permissions,
+        chat_scratch_dir=settings.agy_chat_scratch_dir,
     )
 
     security = Security(
@@ -69,6 +70,7 @@ async def _amain() -> None:
         store=store,
         security=security,
         bot_username=settings.telegram_bot_username,
+        chat_prompt_prefix=settings.chat_prompt_prefix,
     )
 
     app = build_application(settings.telegram_bot_token, bot)

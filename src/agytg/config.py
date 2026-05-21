@@ -39,6 +39,25 @@ class Settings(BaseSettings):
         Path.home() / ".gemini" / "antigravity-cli" / "conversations",
         alias="AGY_CONVERSATIONS_DIR",
     )
+    # Directory used as cwd for `agy` in chat mode. Must contain no
+    # antigravity project markers so agy does not auto-attach a project.
+    agy_chat_scratch_dir: Path = Field(
+        Path.home() / ".cache" / "agytg" / "scratch",
+        alias="AGY_CHAT_SCRATCH_DIR",
+    )
+    # Optional system-style instruction prepended to user prompts in chat
+    # mode. Helps keep agy in a conversational register instead of slipping
+    # into agentic planning. Set to empty string to disable.
+    chat_prompt_prefix: str = Field(
+        (
+            "[System note for agy: Kamu sedang chat ringan via Telegram. "
+            "Jawab natural dan singkat mengikuti bahasa user. JANGAN buat "
+            "implementation plan, JANGAN narasi rencana tool, JANGAN buat "
+            "file kecuali user eksplisit minta. Kalau user nanya teknis, "
+            "jawab langsung tanpa proses formal.]\n\n[User]: "
+        ),
+        alias="CHAT_PROMPT_PREFIX",
+    )
 
     # Storage
     database_path: Path = Field(Path("./data/agytg.sqlite"), alias="DATABASE_PATH")
